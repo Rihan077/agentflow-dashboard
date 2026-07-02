@@ -6,7 +6,7 @@ from datetime import datetime
 
 load_dotenv()
 
-API_URL = os.getenv('API_URL', 'https://hwb6mfqk9e.execute-api.us-east-1.amazonaws.com')
+API_URL = os.getenv('API_URL', 'https://hwb6mfqk9e.execute-api.us-east-1.amazonaws.com/prod/agents/test-agent-1/execute')
 API_KEY = os.getenv('API_KEY', 'DishaRihan22')
 
 # ── Page config ──────────────────────────────────────────
