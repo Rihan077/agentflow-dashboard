@@ -6,6 +6,7 @@ from datetime import datetime
 
 load_dotenv()
 
+# ── These two lines are the fix — hardcoded new URL as fallback ──
 API_URL = os.getenv('API_URL', 'https://hwb6mfqk9e.execute-api.us-east-1.amazonaws.com/prod/agents/test-agent-1/execute')
 API_KEY = os.getenv('API_KEY', 'DishaRihan22')
 
@@ -43,7 +44,7 @@ st.markdown('# 🤖 AgentFlow Dashboard')
 st.markdown('*AI Agent Hosting Platform — Built by Rihan & Disha*')
 st.divider()
 
-# ── Layout: Chat (left) + Stats (right) ─────────────────
+# ── Layout ───────────────────────────────────────────────
 col1, col2 = st.columns([2, 1])
 
 with col1:
@@ -53,13 +54,11 @@ with col1:
     system_prompt = st.text_input('System Prompt', value='You are a helpful assistant.', key='sysprompt')
     st.divider()
 
-    chat_container = st.container()
-    with chat_container:
-        for msg in st.session_state.messages:
-            if msg['role'] == 'user':
-                st.markdown(f'<div class="chat-msg-user">👤 <b>You:</b> {msg["content"]}</div>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<div class="chat-msg-ai">🤖 <b>Agent:</b> {msg["content"]}</div>', unsafe_allow_html=True)
+    for msg in st.session_state.messages:
+        if msg['role'] == 'user':
+            st.markdown(f'<div class="chat-msg-user">👤 <b>You:</b> {msg["content"]}</div>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<div class="chat-msg-ai">🤖 <b>Agent:</b> {msg["content"]}</div>', unsafe_allow_html=True)
 
     st.divider()
 
@@ -85,7 +84,15 @@ with col1:
                     'api_key': API_KEY
                 }
 
-                response = requests.post(API_URL, json=payload, timeout=60)
+                response = requests.post(
+                    API_URL,
+                    json=payload,
+                    headers={
+                        'Content-Type': 'application/json',
+                        'x-api-key': API_KEY
+                    },
+                    timeout=60
+                )
                 data = response.json()
 
                 if data.get('status') == 'success':
@@ -96,10 +103,8 @@ with col1:
 
                     st.session_state.messages.append({'role': 'user', 'content': user_input})
                     st.session_state.messages.append({'role': 'assistant', 'content': output})
-
                     st.session_state.total_cost  += cost
                     st.session_state.total_calls += 1
-
                     st.session_state.history.append({
                         'time':    datetime.now().strftime('%H:%M:%S'),
                         'input':   user_input[:40] + '...' if len(user_input) > 40 else user_input,
@@ -115,7 +120,7 @@ with col1:
                     if isinstance(error, dict):
                         st.error(f"Agent error: {error.get('message', 'Unknown error')}")
                     else:
-                        st.error(f'Error: {data}')
+                        st.error(f'Agent error: {error}')
 
             except requests.exceptions.Timeout:
                 st.error('Request timed out — agent took too long to respond')
@@ -134,9 +139,9 @@ with col2:
     st.divider()
 
     st.markdown('### ⚙️ Agent Info')
-    st.markdown(f'**Endpoint:** `test-agent-1`')
-    st.markdown(f'**Framework:** LangChain + OpenAI')
-    st.markdown(f'**Memory:** Session-based')
+    st.markdown('**Endpoint:** `test-agent-1`')
+    st.markdown('**Framework:** LangChain + OpenAI')
+    st.markdown('**Memory:** Session-based')
     st.divider()
 
     st.markdown('### 🕒 Execution History')
